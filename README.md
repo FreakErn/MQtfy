@@ -1,0 +1,2 @@
+# MQtfy
+Ntfy MQTT Gateway
