@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MQtfy"
-version = "0.1.0"
+version = "0.2.0"
 description = "MQtfy - A ntfy <-> mqtt gateway. Subscribes to ntfy and mqtt topics and sends these to the other side ;)"
 authors = [
     { name="Dave aka. FreakErn", email="github@freakern.de" }

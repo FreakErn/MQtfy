@@ -6,12 +6,20 @@ import json
 import threading
 import time
 from pathlib import Path
+from .config_loader import download_config_from_github, get_version
 
 
 def load_config(path='config.yaml'):
     if not Path(path).exists():
-        print(f"Config file ({path}) could not be found! Exiting!")
-        exit()
+        print(f"Config file ({path}) could not be found! Getting a fresh one!")
+        tag_version = get_version()
+        try:
+            download_config_from_github(tag_version)
+            print(f"Please update the config.yaml file for your environment and rerun mqtfy.")
+            exit()
+        except Exception as e:
+            print(f"Sorry, config file {path} could not be downloaded, please go to 'https://github.com/FreakErn/MQtfy' and download a config File for this version ({tag_version})!")
+
     with open(path, 'r') as f:
         return yaml.safe_load(f)
 

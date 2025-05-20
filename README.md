@@ -8,3 +8,8 @@ Send MQTT Messages to send ntfy Notifications and subscribe to ntfy to send them
 $ cp config.yaml.example config.yaml # update the yaml to fit your needs
 $ pip install mqtfy
 ```
+
+
+## Todo
+Update this Readme (sorry :/)
+ 
