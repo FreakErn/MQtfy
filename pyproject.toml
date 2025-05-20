@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "MQtfy"
+version = "0.1.0"
+description = "MQtfy - A ntfy <-> mqtt gateway. Subscribes to ntfy and mqtt topics and sends these to the other side ;)"
+authors = [
+    { name="Dave aka. FreakErn", email="github@freakern.de" }
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "paho-mqtt>=2.0",
+    "pyyaml>=6.0",
+    "requests>=2.31.0",
+    "toml"
+]
+
+[project.urls]
+Homepage = "https://github.com/FreakErn/MQtfy"
+
+[project.scripts]
+mqtfy = "mqtfy.main:main"

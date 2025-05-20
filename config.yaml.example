@@ -1,0 +1,19 @@
+mqtt_host: "mqtt.local"             # MQTT Host
+mqtt_port: 1883                     # MQTT Port
+mqtt_user: "mqttuser"               # MQTT User (remove if not needed)
+mqtt_pass: "mqttpass"               # MQTT Password (remove if not needed)
+mqtt_topic: "mqtfy/"                # MQTT Topic
+mqtt_client_id: "mqtfy"             # MQTT client id
+ntfy_url: "https://ntfy.sh"         # ntfy url
+log_level: "INFO"                   # Log lebvel
+receive_only_message: True          # do you want the ntfy message (true) or the entire body (false)
+ignore_events: keepalive, open      # some events are not really helpful
+
+# subtopics to subscribe to (mqtt and ntfy)
+subtopics:
+  - topic: "foo"                    # ntfy topic
+    ntfy_user: "user1"              # ntfy user for that topic
+    ntfy_pass: "pass1"              # ntfy password for that user
+  - topic: "bar"
+    ntfy_user: "user2"
+    ntfy_pass: "pass2"
