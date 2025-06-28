@@ -16,6 +16,9 @@ WORKDIR /app
 # Copy the entire local project into the container
 COPY . /app
 
+# Copy the example file to its right Name so the first run does not download one
+COPY config.yaml.example /app/config.yaml
+
 # Install the current project (assumes pyproject.toml or setup.py is present)
 RUN pip install .
 

@@ -5,6 +5,8 @@ import requests
 import json
 import threading
 import time
+
+from json import JSONDecodeError
 from pathlib import Path
 from .config_loader import download_config_from_github, get_version
 
@@ -40,7 +42,7 @@ def main():
     MQTT_PASS = config.get('mqtt_pass')
     MQTT_TOPIC = config.get('mqtt_topic', 'mqtfy/')
     MQTT_CLIENT_ID = config.get('mqtt_client_id', 'mqtfy-client')
-    NTFY_URL = config.get('ntfy_url', 'https://ntfy.sh')
+    MAIN_NTFY_URL = config.get('ntfy_url', 'https://ntfy.sh')
     IGNORE_EVENTS = [item.strip().lower() for item in config.get('ignore_events', '').split(',') if item.strip()]
     
     RECEIVE_ONLY_MESSAGE = str_to_bool(config.get('receive_only_message', True))
@@ -48,7 +50,11 @@ def main():
     logger.debug(f"RECEIVE_ONLY_MESSAGE: {RECEIVE_ONLY_MESSAGE}")
 
     ALLOWED_SUBTOPICS = {
-        entry['topic']: (entry['ntfy_user'], entry['ntfy_pass'])
+                entry['topic']: (
+            entry['ntfy_user'],
+            entry['ntfy_pass'],
+            entry.get('ntfy_url', MAIN_NTFY_URL)
+        )
         for entry in config.get('subtopics', [])
     }
 
@@ -63,30 +69,26 @@ def main():
     def on_message(client, userdata, msg):
         topic_suffix = msg.topic[len(MQTT_TOPIC + "send/"):]
 
+        payload_json = msg.payload.decode()
+        data = {}
         try:
-            payload_json = msg.payload.decode()
             data = json.loads(payload_json)
             logger.debug(f"Receive JSON: {data}")
-        except Exception as e:
-            logger.error(f"Invalid JSON in Payload: {e}")
-            return
+        except JSONDecodeError as e:
+            logger.debug(f"Use {payload_json} as string payload")
+            data['message'] = payload_json
 
-        headers = data.get("headers")
-        message = data.get("message")
-
-        if not isinstance(headers, dict) or not isinstance(message, str):
-            logger.warning(f"Message ignored – invalid format. headers: {headers}, message: {message}")
-            return
+        data['topic'] = topic_suffix
+        logger.debug(f"Output JSON: {data}")
 
         if topic_suffix in ALLOWED_SUBTOPICS:
-            ntfy_user, ntfy_pass = ALLOWED_SUBTOPICS[topic_suffix]
-            url = f"{NTFY_URL.rstrip('/')}/{topic_suffix}"
+            ntfy_user, ntfy_pass, ntfy_url = ALLOWED_SUBTOPICS[topic_suffix]
+            url = f"{ntfy_url.rstrip('/')}"
 
             try:
                 resp = requests.post(
                     url,
-                    headers=headers,
-                    data=message.encode("utf-8"),
+                    data=json.dumps(data),
                     auth=(ntfy_user, ntfy_pass)
                 )
                 logger.info(f"Message to ntfy ({topic_suffix}) send: status={resp.status_code}")
@@ -95,10 +97,11 @@ def main():
         else:
             logger.warning(f"Ignore unknown subtopic: '{topic_suffix}'")
 
-    def listen_to_ntfy(subtopic, ntfy_user, ntfy_pass):
+    def listen_to_ntfy(subtopic, ntfy_user, ntfy_pass, ntfy_url):
+        logger.debug(f"Try to connect to {ntfy_url}")
         while True:
             try:
-                url = f"{NTFY_URL.rstrip('/')}/{subtopic}/json"
+                url = f"{ntfy_url.rstrip('/')}/{subtopic}/json"
                 with requests.get(url, stream=True, auth=(ntfy_user, ntfy_pass), timeout=90) as resp:
                     if resp.status_code == 200:
                         logger.info(f"Start JSON-Stream for {subtopic}")
@@ -123,6 +126,9 @@ def main():
                                     logger.warning(f"Error while processing JSON message: {e}")
                     else:
                         logger.warning(f"Subscribe to JSON-Stream failed for {subtopic} - Status: {resp.status_code}")
+                        if resp.status_code in (401, 403):
+                            logger.error(f"Connection to {url} with {ntfy_user} is not allowed!")
+                            return
             except Exception as e:
                 logger.warning(f"Error in JSON connection for {subtopic}: {e}")
             logger.info(f"Restarting JSON connection to {subtopic} in 5 seconds.")
@@ -136,9 +142,8 @@ def main():
     try:
         logger.info(f"Connecting to MQTT-Broker {MQTT_HOST}:{MQTT_PORT}")
         mqtt_client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
-
-        for subtopic, (ntfy_user, ntfy_pass) in ALLOWED_SUBTOPICS.items():
-            threading.Thread(target=listen_to_ntfy, args=(subtopic, ntfy_user, ntfy_pass), daemon=True).start()
+        for subtopic, (ntfy_user, ntfy_pass, ntfy_url) in ALLOWED_SUBTOPICS.items():
+            threading.Thread(target=listen_to_ntfy, args=(subtopic, ntfy_user, ntfy_pass, ntfy_url), daemon=True).start()
 
         mqtt_client.loop_forever()
     except Exception as e:

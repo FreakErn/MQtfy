@@ -15,5 +15,6 @@ subtopics:
     ntfy_user: "user1"              # ntfy user for that topic
     ntfy_pass: "pass1"              # ntfy password for that user
   - topic: "bar"
+    ntfy_url: "https://ntfy.example.com"  # optional - if not pressent, it uses the global configured ntfy_url
     ntfy_user: "user2"
     ntfy_pass: "pass2"
