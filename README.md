@@ -59,7 +59,7 @@ To stay close to the documentation, here is an example:
 
 ```bash
 mosquitto_pub -h mqtt.local -t "mqtfy/send/myTest" -m '{
-    "topic": "WILL_BE_OVERWRITTEN_BY -> myTest    ⬆️",
+    "topic": "WILL_BE_OVERWRITTEN_BY -> myTest ⬆️",
     "message": "Disk space is low at 5.1 GB",
     "title": "Low disk space alert",
     "tags": ["warning","cd"],
