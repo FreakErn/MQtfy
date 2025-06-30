@@ -12,7 +12,23 @@ $ mqtfy
 ```
 
 ### Docker
-Todo
+
+#### docker run
+```bash
+$ docker run -d --restart=unless-stopped --name MQtfy -v /path/to/my/MQtfy/config.yaml:/app/config.yaml freakern/mqtfy:latest
+```
+
+#### docker-compose
+
+```yaml
+services:
+  mqtfy:
+    restart: unless-stopped
+    container_name: MQtfy
+    volumes:
+      - /path/to/my/MQtfy/config.yaml:/app/config.yaml
+    image: freakern/mqtfy:latest
+```
 
 ## Configuration
 
